@@ -2,18 +2,18 @@
 - name: collect admin and bootstrap keys
   command: ceph-create-keys --cluster {{ cluster }} -i {{ monitor_name }} -t 30
   changed_when: false
-  check_mode: no
+  always_run: true
   when:
     - cephx
-    - ceph_release_num[ceph_release] >= ceph_release_num.luminous
+    - ceph_release_num.{{ ceph_release }} >= ceph_release_num.luminous
 
 - name: collect admin and bootstrap keys
   command: ceph-create-keys --cluster {{ cluster }} -i {{ monitor_name }}
   changed_when: false
-  check_mode: no
+  always_run: true
   when:
     - cephx
-    - ceph_release_num[ceph_release] < ceph_release_num.luminous
+    - ceph_release_num.{{ ceph_release }} < ceph_release_num.luminous
 
 # NOTE (leseb): wait for mon discovery and quorum resolution
 # the admin key is not instantaneously created so we have to wait a bit
@@ -40,7 +40,7 @@
   command: ceph --cluster {{ cluster }} config-key get initial_mon_keyring
   changed_when: false
   ignore_errors: true
-  check_mode: no
+  always_run: true
   run_once: true
   failed_when: false
   register: is_initial_mon_keyring_in_kv
@@ -48,7 +48,7 @@
 - name: put initial mon keyring in mon kv store
   command: ceph --cluster {{ cluster }} config-key put initial_mon_keyring {{ monitor_keyring.stdout }}
   changed_when: false
-  check_mode: no
+  always_run: true
   run_once: true
   when:
     - is_initial_mon_keyring_in_kv.rc != 0
@@ -73,7 +73,7 @@
     - cephx
     - groups.get(mgr_group_name, []) | length > 0
     - inventory_hostname == groups[mon_group_name]|last
-    - ceph_release_num[ceph_release] > ceph_release_num.jewel
+    - ceph_release_num.{{ ceph_release }} > ceph_release_num.jewel
   with_items: "{{ groups.get(mgr_group_name, []) }}"
 
 - name: crush_rules.yml
@@ -85,7 +85,7 @@
   shell: ls -1 /etc/ceph/*.keyring
   changed_when: false
   register: ceph_keys
-  check_mode: no
+  always_run: true
   when:
     - cephx
 
@@ -104,7 +104,7 @@
   set_fact:
     bootstrap_rbd_keyring: "/var/lib/ceph/bootstrap-rbd/{{ cluster }}.keyring"
   when:
-    - ceph_release_num[ceph_release] >= ceph_release_num.luminous
+    - ceph_release_num.{{ ceph_release }} >= ceph_release_num.luminous
 
 - name: copy keys to the ansible server
   fetch:

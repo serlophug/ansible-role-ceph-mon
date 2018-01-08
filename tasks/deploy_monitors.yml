@@ -12,7 +12,7 @@
   changed_when: false
   register: monitor_keyring
   become: false
-  check_mode: no
+  always_run: true
   when: cephx
 
 - name: create monitor initial keyring
@@ -42,7 +42,7 @@
   set_fact:
     ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow' --cap mgr 'allow *'"
   when:
-    - ceph_release_num[ceph_release] >= ceph_release_num.luminous
+    - ceph_release_num.{{ ceph_release }} >= ceph_release_num.luminous
     - cephx
     - admin_secret != 'admin_secret'
 
@@ -50,7 +50,7 @@
   set_fact:
     ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow'"
   when:
-    - ceph_release_num[ceph_release] < ceph_release_num.luminous
+    - ceph_release_num.{{ ceph_release }} < ceph_release_num.luminous
     - cephx
     - admin_secret != 'admin_secret'
 
